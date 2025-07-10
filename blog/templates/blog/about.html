@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}About Us - My Blog{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-body p-5">
+                <h1 class="card-title text-center mb-4">About This Blog</h1>
+                <div class="text-center mb-4">
+                    <i class="bi bi-info-circle-fill text-primary" style="font-size: 3rem;"></i>
+                </div>
+                <p class="lead">Welcome to our demonstration blog!</p>
+                <p>This is a purely visual template with no backend functionality.</p>
+                <p>Features shown include:</p>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item">Responsive design</li>
+                    <li class="list-group-item">Bootstrap 5 styling</li>
+                    <li class="list-group-item">Navigation menu</li>
+                    <li class="list-group-item">Placeholder pages</li>
+                </ul>
+                <div class="text-center mt-4">
+                    <a href="{% url 'blog:home' %}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

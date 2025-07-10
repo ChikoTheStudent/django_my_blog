@@ -1,7 +1,6 @@
-<!DOCTYPE html>
-<html>
-<body>
+{% extends "base.html" %}
 
+{% block content %}
 <a href="{% url 'blog:home' %}">← Back to Home</a>
 
 <h1>{{ post.title }}</h1>
@@ -17,3 +16,5 @@
 
 </body>
 </html>
+
+{% endblock content %}
