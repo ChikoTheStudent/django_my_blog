@@ -1,20 +1,38 @@
 {% extends "base.html" %}
 
 {% block content %}
-<a href="{% url 'blog:home' %}">← Back to Home</a>
+<article>
+    <h1>{{ post.title }}</h1>
+    <p>{{ post.content }}</p>
 
-<h1>{{ post.title }}</h1>
-<p><strong>By:</strong> {{ post.author }} on {{ post.created_at|date:"M d, Y" }}</p>
-<div>
-  {{ post.content }}
-</div>
+    <div class="like-section">
+        <form action="{% url 'blog:like_post' post_id=post.id %}" method="post">
+            {% csrf_token %}
+            <button type="submit">
+                {% if request.user in post.likes.all %}❤️{% else %}🤍{% endif %}
+                {{ post.likes.count }} likes
+            </button>
+        </form>
+    </div>
+</article>
 
-<p>
-  <a href="{% url 'blog:edit_post' post.id %}">Edit</a> |
-  <a href="{% url 'blog:delete_post' post.id %}">Delete</a>
-</p>
+<section>
+    <h2>Comments</h2>
+    {% for comment in comments %}
+    <div>
+        <p>{{ comment.text }}</p>
+        <small>By {{ comment.author }} on {{ comment.created_date|date:"F d, Y" }}</small>
+    </div>
+    {% endfor %}
 
-</body>
-</html>
-
-{% endblock content %}
+    {% if user.is_authenticated %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Post Comment</button>
+    </form>
+    {% else %}
+    <p><a href="{% url 'blog:login' %}">Login</a> to comment</p>
+    {% endif %}
+</section>
+{% endblock %}

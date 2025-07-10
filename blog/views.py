@@ -5,11 +5,14 @@ from django.contrib.auth.decorators import login_required
 from .models import Post
 from .forms import RegisterForm, PostForm
 from django.contrib import messages
+from .forms import CommentForm
+from .models import Post, Like 
+
 
 # Authentication Views
 def register_view(request):
     if request.user.is_authenticated:
-        return redirect('home')
+        return redirect('blog:home')
         
     if request.method == 'POST':
         form = RegisterForm(request.POST)
@@ -17,14 +20,14 @@ def register_view(request):
             user = form.save()
             login(request, user)
             messages.success(request, 'Registration successful!')
-            return redirect('home')
+            return redirect('blog:home')
     else:
         form = RegisterForm()
     return render(request, 'blog/register.html', {'form': form})
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('home')
+        return redirect('blog:home')
         
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -32,7 +35,7 @@ def login_view(request):
             user = form.get_user()
             login(request, user)
             messages.success(request, f'Welcome back, {user.username}!')
-            return redirect('home')
+            return redirect('blog:home')
     else:
         form = AuthenticationForm()
     return render(request, 'blog/login.html', {'form': form})
@@ -41,7 +44,7 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     messages.info(request, 'You have been logged out.')
-    return redirect('home')
+    return redirect('blog:home')
 
 # Blog Views
 def home(request):
@@ -50,7 +53,27 @@ def home(request):
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    return render(request, 'blog/post_detail.html', {'post': post})
+    comments = post.comments.filter(approved_comment=True)
+    
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.author = request.user
+            comment.approved_comment = True
+            comment.save()
+            return redirect('blog:post_detail', post_id=post.id)
+    else:
+        form = CommentForm()
+
+    comments = post.comments.all()
+    
+    return render(request, 'blog/post_detail.html', {
+        'post': post,
+        'comments': comments,
+        'form': form
+    })
 
 @login_required
 def create_post(request):
@@ -61,43 +84,43 @@ def create_post(request):
             post.author = request.user
             post.save()
             messages.success(request, 'Your post has been created!')
-            return redirect('post_detail', pk=post.pk)
+            return redirect('blog:post_detail', post_id=post.id)
     else:
         form = PostForm()
     return render(request, 'blog/post_form.html', {'form': form, 'title': 'Create Post'})
 
 @login_required
-def edit_post(request, pk):
-    post = get_object_or_404(Post, pk=pk)
+def edit_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
     
     # Ensure only the author can edit
     if post.author != request.user:
         messages.error(request, 'You can only edit your own posts!')
-        return redirect('post_detail', pk=post.pk)
+        return redirect('blog:post_detail', post_id=post.id)
         
     if request.method == 'POST':
         form = PostForm(request.POST, instance=post)
         if form.is_valid():
             form.save()
             messages.success(request, 'Your post has been updated!')
-            return redirect('post_detail', pk=post.pk)
+            return redirect('blog:post_detail', post_id=post.id)
     else:
         form = PostForm(instance=post)
     return render(request, 'blog/post_form.html', {'form': form, 'title': 'Edit Post'})
 
 @login_required
-def delete_post(request, pk):
-    post = get_object_or_404(Post, pk=pk)
+def delete_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
     
     # Ensure only the author can delete
     if post.author != request.user:
         messages.error(request, 'You can only delete your own posts!')
-        return redirect('home')
+        return redirect('blog:home')
         
     if request.method == 'POST':
         post.delete()
         messages.success(request, 'Your post has been deleted!')
-        return redirect('home')
+        return redirect('blog:home')
     return render(request, 'blog/post_confirm_delete.html', {'post': post})
 
 def about(request):
@@ -105,3 +128,19 @@ def about(request):
 
 def contact(request):
     return render(request, 'blog/contact.html')
+
+@login_required
+def like_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    
+    # Check if user already liked the post
+    like, created = Like.objects.get_or_create(
+        post=post,
+        user=request.user
+    )
+    
+    if not created:
+        # User already liked, so unlike
+        like.delete()
+    
+    return redirect('blog:post_detail', post_id=post.id)

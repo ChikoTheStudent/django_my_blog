@@ -1,17 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>{{ title }}</h1>
-
-<form method="POST">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Save</button>
-</form>
-
-<a href="{% url 'blog:home' %}">← Cancel</a>
-
-</body>
-</html>
-
-{% endblock content %}
+    <h1>{{ title }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+        <a href="{% if post %}{% url 'blog:post_detail' post_id=post.id %}{% else %}{% url 'blog:home' %}{% endif %}">Cancel</a>
+    </form>
+{% endblock %}
